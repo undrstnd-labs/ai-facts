@@ -67,6 +67,7 @@ export default function AppLayout() {
   const processStatement = async (statement: Statement) => {
     try {
       const result = await checkFakeNews(statement.text);
+      console.log("Processed statement:", result);
       statement.processed = true;
       statement.result = result;
       return statement;

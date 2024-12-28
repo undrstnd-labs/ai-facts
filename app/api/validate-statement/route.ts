@@ -1,13 +1,13 @@
 import { validatedStatementSchema,  } from "@/utils/schemas";
-import { createOpenAI, openai } from "@ai-sdk/openai";
+import { createOpenAI } from "@ai-sdk/openai";
 import { generateObject, generateText } from "ai";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
-const perplexity = createOpenAI({
-  name: "perplexity",
-  apiKey: process.env.PERPLEXITY_API_KEY ?? "",
-  baseURL: "https://api.perplexity.ai/",
+const undrstnd = createOpenAI({
+  name: "undrstnd",
+  apiKey: process.env.UNDRSTND_API_KEY ?? "",
+  baseURL: "https://api.undrstnd-labs.com/",
 });
 
 const generateCheckablePrompt = (statement: string, transcript?: string) => {
@@ -35,7 +35,7 @@ const generatePrompt = (
   `;
 };
 
-const generatePerplexityPrompt = (statement: string, transcript?: string) => {
+const generateUndrstndPrompt = (statement: string, transcript?: string) => {
   return `Analyze this statement and determine if it is true, dubious (questionable but not certain), or obviously fake. Provide a single sentence response in the format: "The statement is [true/dubious/obviously-fake] because [brief reason]." Do not provide sources. Slight spelling mistakes are ok and not considered a fake statement.
 
 Statement: "${statement}"${transcript ? `\n\nConversation context in case subject of statement is ambigious (infer subject from this trascript):\n${transcript.concat(" " + statement)}` : ""}
@@ -78,7 +78,7 @@ export const POST = async (request: Request) => {
   }
 
   const { object } = await generateObject({
-    model: openai("gpt-4o-mini"),
+    model: undrstnd("llama-3.3-70b"),
     prompt: generateCheckablePrompt(statement, transcript),
     schema: z.object({
       checkableType: z
@@ -99,16 +99,16 @@ export const POST = async (request: Request) => {
 
   let additionalInfo: string | undefined = undefined;
   if (object.checkableType === "needs-more-info") {
-    const { text: perplexityCheck } = await generateText({
-      model: perplexity("llama-3.1-sonar-small-128k-online"),
+    const { text: undrstndCheck } = await generateText({
+      model: undrstnd("llama-3.2-90b-text-preview"),
       maxTokens: 100,
-      prompt: generatePerplexityPrompt(statement, transcript),
+      prompt: generateUndrstndPrompt(statement, transcript),
     });
-    additionalInfo = perplexityCheck;
+    additionalInfo = undrstndCheck;
   }
 
   const { object: generation } = await generateObject({
-    model: openai("gpt-4o-mini"),
+    model: undrstnd("llama-3.1-8b-instant"),
     schema: validatedStatementSchema,
     prompt: generatePrompt(statement, transcript, additionalInfo),
   });

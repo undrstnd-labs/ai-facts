@@ -20,7 +20,7 @@ export const viewport: Viewport = {
 export const metadata: Metadata = {
   metadataBase: new URL("https://ai-facts.vercel.app"),
   title: "AI Facts",
-  description: `Realtime fact checking with Deepgram, Perplexity, OpenAI, and the AI SDK`,
+  description: `Realtime fact checking with Deepgram, Undrstnd, and the AI SDK`,
   robots: {
     index: false,
     follow: false,
